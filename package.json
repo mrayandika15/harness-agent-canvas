@@ -1,0 +1,30 @@
+{
+  "name": "harness-agent-canvas",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@radix-ui/react-scroll-area": "^1.2.10",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@tailwindcss/postcss": "^4.2.4",
+    "@xyflow/react": "^12.10.2",
+    "class-variance-authority": "^0.7.1",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^1.8.0",
+    "next": "^16.2.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-markdown": "^10.1.0",
+    "tailwindcss": "^4.2.4",
+    "zustand": "^5.0.12"
+  },
+  "devDependencies": {
+    "shadcn": "^4.4.0"
+  }
+}
