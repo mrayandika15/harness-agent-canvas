@@ -1,5 +1,5 @@
-import { AgentCanvasDashboard } from "@/features/dashboard/components/agent-canvas-dashboard";
+import { DashboardScreen } from "@/app/_components/dashboard-screen";
 
 export default function HomePage() {
-  return <AgentCanvasDashboard />;
+  return <DashboardScreen />;
 }
