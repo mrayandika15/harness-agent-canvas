@@ -1,12 +1,14 @@
+import type { Agent } from "@/features/agents/types/agent";
 import type { FlowStep } from "@/features/flow/types/flow-step";
 
-export type AppView = "canvas" | "chat";
+export type AppView = "canvas" | "chat" | "integrations" | "settings";
 
 export type MarkdownSidebarMode = "view" | "edit";
 
 export type WorkspaceState = {
   appView: AppView;
   activeStep: number;
+  agentItems: Agent[];
   flowStepItems: FlowStep[];
   isAgentPanelCollapsed: boolean;
   isInspectorCollapsed: boolean;
@@ -16,6 +18,7 @@ export type WorkspaceState = {
   selectedAgentName: string;
   selectedFlowNodeId: string | null;
   agentSearchQuery: string;
+  addAgent: (agent: Agent) => void;
   setActiveStep: (step: number) => void;
   setAppView: (view: AppView) => void;
   setAgentSearchQuery: (query: string) => void;

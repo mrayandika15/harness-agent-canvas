@@ -35,13 +35,13 @@ export function AgentListItem({ agent, active }: AgentListItemProps) {
           isAgentPanelCollapsed && "flex justify-center px-2 py-3",
         )}
       >
-        <div className="flex items-center gap-3">
+        <div className="grid min-w-0 grid-cols-[40px_minmax(0,1fr)] items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] border border-white/8 bg-white/[0.03]">
-            <PixelAgent color={agent.color} size="sm" />
+            <PixelAgent color={agent.color} icon={agent.icon} size="sm" />
           </div>
           {!isAgentPanelCollapsed ? (
             <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-3">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                 <p
                   className={cn(
                     "truncate text-[0.95rem] font-semibold tracking-[-0.04em] text-white/86",
@@ -53,15 +53,17 @@ export function AgentListItem({ agent, active }: AgentListItemProps) {
                 <Badge
                   variant="outline"
                   className={cn(
-                    "rounded-full border-white/10 bg-white/[0.03] px-2.5 text-[10px] uppercase tracking-[0.2em] text-white/46",
+                    "max-w-24 shrink-0 rounded-full border-white/10 bg-white/[0.03] px-2 text-[10px] uppercase tracking-[0.18em] text-white/46",
                     active && "border-[rgba(245,148,78,0.2)] text-[var(--accent-strong)]",
                   )}
                 >
-                  {agent.status}
+                  <span className="truncate">{agent.status}</span>
                 </Badge>
               </div>
-              <p className="mt-1 text-xs text-white/42">
-                Assigned to orchestrated workflow operations
+              <p className="mt-1 truncate text-xs text-white/42">
+                {agent.personality
+                  ? agent.personality.replace(/^#+\s*/m, "").split("\n")[0]
+                  : "Assigned to orchestrated workflow operations"}
               </p>
             </div>
           ) : null}

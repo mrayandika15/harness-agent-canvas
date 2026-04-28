@@ -1,6 +1,8 @@
 "use client";
 
 import { AgentCanvasShell } from "@/app/_components/agent-canvas-shell";
+import { AgentIntegrationsWorkspace } from "@/features/agents/components/agent-integrations-workspace";
+import { AgentSettingsWorkspace } from "@/features/agents/components/agent-settings-workspace";
 import { AgentChatWorkspace } from "@/features/chat/components/agent-chat-workspace";
 import { FlowCanvasAssistant } from "@/features/flow/components/flow-canvas-assistant";
 import { FlowCanvas } from "@/features/flow/components/flow-canvas";
@@ -16,7 +18,11 @@ export function DashboardScreen() {
 
   return (
     <AgentCanvasShell>
-      {appView === "chat" ? (
+      {appView === "settings" ? (
+        <AgentSettingsWorkspace />
+      ) : appView === "integrations" ? (
+        <AgentIntegrationsWorkspace />
+      ) : appView === "chat" ? (
         <AgentChatWorkspace />
       ) : (
         <>

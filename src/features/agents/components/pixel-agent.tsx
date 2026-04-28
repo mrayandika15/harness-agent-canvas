@@ -2,10 +2,11 @@ import { cn } from "@/lib/utils";
 
 type PixelAgentProps = {
   color: string;
+  icon?: string;
   size?: "sm" | "md";
 };
 
-export function PixelAgent({ color, size = "md" }: PixelAgentProps) {
+export function PixelAgent({ color, icon, size = "md" }: PixelAgentProps) {
   const cells = [
     [1, 0],
     [2, 0],
@@ -22,6 +23,25 @@ export function PixelAgent({ color, size = "md" }: PixelAgentProps) {
     [1, 4],
     [2, 4],
   ];
+
+  if (icon) {
+    return (
+      <div
+        className={cn(
+          "flex items-center justify-center rounded-[10px] font-semibold leading-none",
+          size === "md" && "h-8 w-8 text-base",
+          size === "sm" && "h-6 w-6 text-xs",
+        )}
+        style={{
+          color,
+          background: `${color}14`,
+          boxShadow: `0 0 18px ${color}18 inset`,
+        }}
+      >
+        {icon.slice(0, 2)}
+      </div>
+    );
+  }
 
   return (
     <div

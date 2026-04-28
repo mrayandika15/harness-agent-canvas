@@ -7,4 +7,6 @@ export type FlowStep = {
   subtitle: string;
   icon: LucideIcon;
   connectedMcp: string[];
+  sourceLinks: string[];
+  instructionStatus: "draft" | "ready" | "review";
 };

@@ -7,15 +7,15 @@ import { PanelCard } from "@/components/app/panel-card";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { agents } from "@/features/agents/lib/agents";
 import { conversationSeed } from "@/features/chat/lib/conversation-seed";
 import { useWorkspaceStore } from "@/features/workspace/stores/workspace-store";
 
 export function AgentChatWorkspace() {
+  const agentItems = useWorkspaceStore((state) => state.agentItems);
   const selectedAgentName = useWorkspaceStore((state) => state.selectedAgentName);
 
   const selectedAgent =
-    agents.find((agent) => agent.name === selectedAgentName) ?? agents[0];
+    agentItems.find((agent) => agent.name === selectedAgentName) ?? agentItems[0];
 
   return (
     <section className="flex min-h-0 flex-1 bg-[rgba(5,5,5,0.82)]">

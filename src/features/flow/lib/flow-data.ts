@@ -17,6 +17,8 @@ export const flowSteps: FlowStep[] = [
     subtitle: "System role, constraints, and behavior",
     icon: BrainCircuit,
     connectedMcp: ["persona-router", "system-prompt", "policy-guard"],
+    sourceLinks: ["docs/ssot.md", "content/flow-nodes/persona.md"],
+    instructionStatus: "ready",
   },
   {
     id: "scrape",
@@ -25,6 +27,8 @@ export const flowSteps: FlowStep[] = [
     subtitle: "Collect page content and state",
     icon: Search,
     connectedMcp: ["apify", "browser", "snapshot-reader"],
+    sourceLinks: ["https://apify.com", "content/flow-nodes/scrape.md"],
+    instructionStatus: "ready",
   },
   {
     id: "qualify",
@@ -33,6 +37,8 @@ export const flowSteps: FlowStep[] = [
     subtitle: "Evaluate output and route actions",
     icon: Diamond,
     connectedMcp: ["rules-engine", "quality-check", "memory-read"],
+    sourceLinks: ["content/flow-nodes/qualify.md"],
+    instructionStatus: "review",
   },
   {
     id: "compose",
@@ -41,6 +47,8 @@ export const flowSteps: FlowStep[] = [
     subtitle: "Generate implementation output",
     icon: Code2,
     connectedMcp: ["codex", "filesystem", "artifact-writer"],
+    sourceLinks: ["README.md", "content/flow-nodes/compose.md"],
+    instructionStatus: "ready",
   },
   {
     id: "memory",
@@ -49,6 +57,8 @@ export const flowSteps: FlowStep[] = [
     subtitle: "Persist session context locally",
     icon: ShieldCheck,
     connectedMcp: ["claude-mem", "sqlite", "session-store"],
+    sourceLinks: ["content/flow-nodes/memory.md"],
+    instructionStatus: "draft",
   },
   {
     id: "deploy",
@@ -57,6 +67,8 @@ export const flowSteps: FlowStep[] = [
     subtitle: "Ship preview result",
     icon: Zap,
     connectedMcp: ["vercel", "preview-deploy", "status-webhook"],
+    sourceLinks: ["https://vercel.com/docs", "content/flow-nodes/deploy.md"],
+    instructionStatus: "review",
   },
 ];
 
@@ -68,6 +80,8 @@ export function createFlowStep(index: number): FlowStep {
     subtitle: "New workflow stage",
     icon: Code2,
     connectedMcp: ["dummy-mcp", "dummy-memory", "dummy-output"],
+    sourceLinks: [],
+    instructionStatus: "draft",
   };
 }
 

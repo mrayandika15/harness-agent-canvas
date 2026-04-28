@@ -9,6 +9,7 @@ import type { WorkspaceState } from "@/features/workspace/types/workspace";
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   appView: "canvas",
   activeStep: 1,
+  agentItems: agents,
   flowStepItems: flowSteps,
   isAgentPanelCollapsed: false,
   isInspectorCollapsed: false,
@@ -18,6 +19,12 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   selectedAgentName: agents[0]?.name ?? "",
   selectedFlowNodeId: flowSteps[0]?.id ?? null,
   agentSearchQuery: "",
+  addAgent: (agent) =>
+    set((state) => ({
+      agentItems: [...state.agentItems, agent],
+      selectedAgentName: agent.name,
+      agentSearchQuery: "",
+    })),
   setActiveStep: (activeStep) => set({ activeStep }),
   setAppView: (appView) => set({ appView }),
   setAgentSearchQuery: (agentSearchQuery) => set({ agentSearchQuery }),

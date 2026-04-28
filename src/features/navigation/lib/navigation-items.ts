@@ -1,8 +1,14 @@
-import { Bot, MessageSquareText, Settings2 } from "lucide-react";
+import { Bot, MessageSquareText, PanelTop, Settings } from "lucide-react";
 
 export const sidebarItems = [
-  { label: "Canvas", icon: Settings2, view: "canvas" as const },
+  { label: "Canvas", icon: PanelTop, view: "canvas" as const },
   { label: "Chat", icon: MessageSquareText, view: "chat" as const },
 ];
+
+export const sidebarSettingsItem = {
+  label: "Settings",
+  icon: Settings,
+  view: "settings" as const,
+};
 
 export const brandMark = Bot;
