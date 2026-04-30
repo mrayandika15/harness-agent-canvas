@@ -9,6 +9,7 @@ import {
   Cpu,
   HardDrive,
   Loader2,
+  BrainCircuit,
   RefreshCw,
   ShieldCheck,
 } from "lucide-react";
@@ -16,6 +17,10 @@ import {
 import { PanelCard } from "@/components/app/panel-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  runtimeAccents,
+  runtimeIcons,
+} from "@/features/agents/lib/runtime-assets";
 import { cn } from "@/lib/utils";
 
 type RuntimeKey = "claude" | "codex";
@@ -33,6 +38,13 @@ type RuntimeStatus = {
 type StatusResponse = {
   checkedAt: string;
   runtimes: RuntimeStatus[];
+};
+
+type ClaudeMemStatus = {
+  enabled: boolean;
+  url: string;
+  project: string;
+  error?: string;
 };
 
 const fallbackRuntimes: RuntimeStatus[] = [
@@ -55,17 +67,6 @@ const fallbackRuntimes: RuntimeStatus[] = [
     process: null,
   },
 ];
-
-const runtimeAccents = {
-  claude: "rgba(245,148,78,0.95)",
-  codex: "rgba(149,232,215,0.95)",
-} satisfies Record<RuntimeKey, string>;
-
-const runtimeIcons = {
-  claude:
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRnkErT1NHfXKAiT6Wnhx3wGsauDrW7UZ0G2Q&s",
-  codex: "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/chatgpt.png",
-} satisfies Record<RuntimeKey, string>;
 
 function formatCheckTime(checkedAt: string | null) {
   if (!checkedAt) {
@@ -105,6 +106,7 @@ function RuntimeDetailRow({ icon: Icon, label, value }: RuntimeDetailRowProps) {
 export function AgentSettingsWorkspace() {
   const [localOnly, setLocalOnly] = useState(true);
   const [status, setStatus] = useState<StatusResponse | null>(null);
+  const [memoryStatus, setMemoryStatus] = useState<ClaudeMemStatus | null>(null);
   const [isChecking, setIsChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,21 +116,33 @@ export function AgentSettingsWorkspace() {
     [runtimes],
   );
   const allReady = readyCount === runtimes.length;
+  const memoryReady = Boolean(memoryStatus?.enabled);
 
   const refreshStatus = useCallback(async () => {
     setIsChecking(true);
     setError(null);
 
     try {
-      const response = await fetch("/api/local-agents/status", {
-        cache: "no-store",
-      });
+      const [runtimeResponse, memoryResponse] = await Promise.all([
+        fetch("/api/local-agents/status", { cache: "no-store" }),
+        fetch("/api/claude-mem/status", { cache: "no-store" }),
+      ]);
 
-      if (!response.ok) {
+      if (!runtimeResponse.ok) {
         throw new Error("Local runtime check failed");
       }
 
-      setStatus((await response.json()) as StatusResponse);
+      setStatus((await runtimeResponse.json()) as StatusResponse);
+      setMemoryStatus(
+        memoryResponse.ok
+          ? ((await memoryResponse.json()) as ClaudeMemStatus)
+          : {
+              enabled: false,
+              url: "http://localhost:37777",
+              project: "harness-agent-canvas",
+              error: "Claude-Mem check failed",
+            },
+      );
     } catch (fetchError) {
       setError(
         fetchError instanceof Error
@@ -251,6 +265,81 @@ export function AgentSettingsWorkspace() {
                   Refresh after starting either CLI in a local terminal.
                 </p>
               )}
+            </div>
+          </div>
+        </PanelCard>
+
+        <PanelCard className="overflow-hidden p-0">
+          <div
+            className="h-1"
+            style={{
+              backgroundColor: memoryReady ? "#95E8D7" : "rgba(255,255,255,0.08)",
+            }}
+          />
+          <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="p-5">
+              <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+                <div className="flex items-start gap-3">
+                  <div
+                    className={cn(
+                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border",
+                      memoryReady
+                        ? "border-[rgba(149,232,215,0.22)] bg-[rgba(149,232,215,0.1)] text-[#95e8d7]"
+                        : "border-white/10 bg-white/[0.04] text-white/38",
+                    )}
+                  >
+                    <BrainCircuit className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">
+                      Claude-Mem project memory
+                    </h3>
+                    <p className="mt-1 max-w-2xl text-sm leading-6 text-white/42">
+                      Inject relevant project memory into agent prompts from the
+                      local Claude-Mem worker. Durable agent memory is managed
+                      by Claude-Mem, not the app store.
+                    </p>
+                  </div>
+                </div>
+
+                <Badge
+                  className={cn(
+                    "rounded-full px-3 sm:justify-self-end",
+                    memoryReady
+                      ? "bg-[rgba(149,232,215,0.12)] text-[#b8fff1]"
+                      : "bg-white/[0.04] text-white/52",
+                  )}
+                >
+                  {memoryReady ? (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  ) : (
+                    <CircleAlert className="h-3.5 w-3.5" />
+                  )}
+                  {memoryReady ? "Running" : "Not running"}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="border-t border-white/6 bg-white/[0.025] lg:border-l lg:border-t-0">
+              <RuntimeDetailRow
+                icon={HardDrive}
+                label="Worker"
+                value={memoryStatus?.url ?? "Checking local worker"}
+              />
+              <RuntimeDetailRow
+                icon={Command}
+                label="Project"
+                value={memoryStatus?.project ?? "harness-agent-canvas"}
+              />
+              <RuntimeDetailRow
+                icon={Cpu}
+                label="Status"
+                value={
+                  memoryReady
+                    ? "Ready for agent memory"
+                    : memoryStatus?.error ?? "Worker not detected"
+                }
+              />
             </div>
           </div>
         </PanelCard>

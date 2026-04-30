@@ -92,21 +92,42 @@ function createInitialSettings(agentNames: string[]) {
 
 export function AgentIntegrationsWorkspace() {
   const agentItems = useWorkspaceStore((state) => state.agentItems);
-  const selectedAgentName = useWorkspaceStore((state) => state.selectedAgentName);
+  const selectedAgentId = useWorkspaceStore((state) => state.selectedAgentId);
   const selectedAgent =
-    agentItems.find((agent) => agent.name === selectedAgentName) ?? agentItems[0];
+    agentItems.find((agent) => agent.id === selectedAgentId) ?? agentItems[0];
   const [settingsByAgent, setSettingsByAgent] = useState(() =>
     createInitialSettings(agentItems.map((agent) => agent.name)),
   );
+  const selectedAgentName = selectedAgent?.name ?? "";
 
   const agentSettings = useMemo(
     () =>
-      settingsByAgent[selectedAgent.name] ?? {
+      settingsByAgent[selectedAgentName] ?? {
         discord: { ...defaultIntegrationSettings.discord },
         telegram: { ...defaultIntegrationSettings.telegram },
       },
-    [selectedAgent.name, settingsByAgent],
+    [selectedAgentName, settingsByAgent],
   );
+
+  if (!selectedAgent) {
+    return (
+      <div className="min-h-0 flex-1 overflow-y-auto bg-[rgba(5,5,5,0.82)]">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 p-6">
+          <PanelCard className="p-6">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-white/28">
+              Agent Integrations
+            </p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white">
+              No agent selected
+            </h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-white/42">
+              Create an agent first, then connect it to Discord or Telegram.
+            </p>
+          </PanelCard>
+        </div>
+      </div>
+    );
+  }
 
   function updateIntegration(
     integration: IntegrationKey,

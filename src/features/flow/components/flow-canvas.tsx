@@ -5,18 +5,21 @@ import { useEffect, useState } from "react";
 import {
   Background,
   Controls,
-  MarkerType,
   Panel,
   ReactFlow,
   useEdgesState,
   useNodesState,
-  type Edge,
   type Node,
   type NodeTypes,
 } from "@xyflow/react";
 
 import { Badge } from "@/components/ui/badge";
-import { saveFlowNodeContent } from "@/features/flow/api/flow-node-content";
+import { AgentGenerationProgress } from "@/features/agents/components/agent-generation-progress";
+import {
+  createAgentFlowNode,
+  deleteAgentFlowNode,
+  fetchAgentFlow,
+} from "@/features/flow/api/agent-flow";
 import {
   createDummyMarkdownContent,
   createFlowStep,
@@ -30,18 +33,80 @@ const nodeTypes: NodeTypes = {
 };
 
 export function FlowCanvas() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(buildInitialNodes());
-  const [edges, setEdges, onEdgesChange] = useEdgesState(buildInitialEdges());
-  const [isSavingNewNode, setIsSavingNewNode] = useState(false);
+  const agentItems = useWorkspaceStore((state) => state.agentItems);
+  const selectedAgentId = useWorkspaceStore((state) => state.selectedAgentId);
   const selectedFlowNodeId = useWorkspaceStore((state) => state.selectedFlowNodeId);
   const flowStepItems = useWorkspaceStore((state) => state.flowStepItems);
+  const [nodes, setNodes, onNodesChange] = useNodesState(
+    buildInitialNodes(flowStepItems),
+  );
+  const [edges, setEdges, onEdgesChange] = useEdgesState(
+    buildInitialEdges(flowStepItems),
+  );
+  const [isSavingNewNode, setIsSavingNewNode] = useState(false);
   const setFlowStepItems = useWorkspaceStore((state) => state.setFlowStepItems);
+  const setActiveStep = useWorkspaceStore((state) => state.setActiveStep);
   const setSelectedFlowNodeId = useWorkspaceStore(
     (state) => state.setSelectedFlowNodeId,
   );
   const setInspectorCollapsed = useWorkspaceStore(
     (state) => state.setInspectorCollapsed,
   );
+  const selectedAgent =
+    agentItems.find((agent) => agent.id === selectedAgentId) ?? agentItems[0];
+  const isGeneratingAgent = selectedAgent?.status === "Generating";
+
+  useEffect(() => {
+    if (!selectedAgentId || isGeneratingAgent) {
+      setFlowStepItems([]);
+      setSelectedFlowNodeId(null);
+      setNodes([]);
+      setEdges([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadAgentFlow() {
+      const flow = await fetchAgentFlow(selectedAgentId);
+
+      if (cancelled) {
+        return;
+      }
+
+      setFlowStepItems(flow.nodes);
+      setSelectedFlowNodeId(null);
+      setActiveStep(0);
+      setInspectorCollapsed(true);
+      setNodes(buildInitialNodes(flow.nodes));
+      setEdges(buildInitialEdges(flow.nodes));
+    }
+
+    void loadAgentFlow();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    selectedAgentId,
+    isGeneratingAgent,
+    setActiveStep,
+    setEdges,
+    setFlowStepItems,
+    setInspectorCollapsed,
+    setNodes,
+    setSelectedFlowNodeId,
+  ]);
+
+  useEffect(() => {
+    setNodes(
+      buildInitialNodes(flowStepItems).map((node) => ({
+        ...node,
+        selected: node.id === selectedFlowNodeId,
+      })),
+    );
+    setEdges(buildInitialEdges(flowStepItems));
+  }, [flowStepItems, selectedFlowNodeId, setEdges, setNodes]);
 
   useEffect(() => {
     setNodes((currentNodes) =>
@@ -53,14 +118,21 @@ export function FlowCanvas() {
           ...flowStepItems.find((step) => step.id === currentNode.id),
           index,
           canAdd: index === allNodes.length - 1 && !isSavingNewNode,
+          canDelete: index > 0,
           onAddStep: handleAddStep,
+          onDeleteStep: () => {
+            void handleDeleteStep(currentNode.id);
+          },
         },
       })),
     );
   }, [isSavingNewNode, selectedFlowNodeId, setNodes, flowStepItems]);
 
   function handleNodeClick(_: React.MouseEvent, node: Node) {
+    const nextIndex = flowStepItems.findIndex((step) => step.id === node.id);
+
     setSelectedFlowNodeId(node.id);
+    setActiveStep(Math.max(nextIndex, 0));
     setInspectorCollapsed(false);
     setNodes((currentNodes) =>
       currentNodes.map((currentNode) => ({
@@ -82,80 +154,88 @@ export function FlowCanvas() {
   }
 
   async function handleAddStep() {
+    if (!selectedAgentId) {
+      return;
+    }
+
     setIsSavingNewNode(true);
 
     try {
       const nextStepNumber = flowStepItems.length;
       const nextMeta = createFlowStep(nextStepNumber);
-      const lastNode = nodes[nodes.length - 1];
-      const nextPosition = {
-        x: (lastNode?.position.x ?? 0) + 340,
-        y: lastNode?.position.y ?? 120,
-      };
+      const flow = await createAgentFlowNode(
+        selectedAgentId,
+        nextMeta,
+        createDummyMarkdownContent(nextMeta),
+      );
 
-      const nextNode: Node = {
-        id: nextMeta.id,
-        type: "flowStep",
-        position: nextPosition,
-        dragHandle: ".flow-node-drag-handle",
-        selected: true,
-        data: {
-          ...nextMeta,
-          index: nodes.length,
-          canAdd: true,
-          onAddStep: handleAddStep,
-        },
-      };
-
-      const nextEdge: Edge | null = lastNode
-        ? {
-            id: `${lastNode.id}-${nextMeta.id}`,
-            source: lastNode.id,
-            target: nextMeta.id,
-            type: "smoothstep",
-            animated: true,
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              width: 18,
-              height: 18,
-              color: "rgba(149, 232, 215, 0.72)",
-            },
-            style: {
-              stroke: "rgba(149, 232, 215, 0.48)",
-              strokeWidth: 2,
-            },
-          }
-        : null;
-
-      setFlowStepItems([...flowStepItems, nextMeta]);
-      setSelectedFlowNodeId(nextMeta.id);
-      setInspectorCollapsed(false);
-      setNodes((currentNodes) => [
-        ...currentNodes.map((currentNode) => ({
-          ...currentNode,
+      setFlowStepItems(flow.nodes);
+      setSelectedFlowNodeId(null);
+      setActiveStep(Math.max(flow.nodes.findIndex((step) => step.id === nextMeta.id), 0));
+      setInspectorCollapsed(true);
+      setNodes(
+        buildInitialNodes(flow.nodes).map((node) => ({
+          ...node,
           selected: false,
-          data: {
-            ...(currentNode.data as Record<string, unknown>),
-            canAdd: false,
-            onAddStep: handleAddStep,
-          },
         })),
-        nextNode,
-      ]);
-
-      if (nextEdge) {
-        setEdges((currentEdges) => currentEdges.concat(nextEdge));
-      }
-
-      await saveFlowNodeContent(nextMeta.id, createDummyMarkdownContent(nextMeta));
+      );
+      setEdges(buildInitialEdges(flow.nodes));
     } finally {
       setIsSavingNewNode(false);
+    }
+  }
+
+  async function handleDeleteStep(nodeId: string) {
+    if (!selectedAgentId) {
+      return;
+    }
+
+    const targetNode = flowStepItems.find((step) => step.id === nodeId);
+
+    if (!targetNode || targetNode.step === "Skill") {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Delete "${targetNode.title}"?\n\nThis removes the node, its Markdown content, generated local skill files, and reconnects the remaining canvas steps.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const flow = await deleteAgentFlowNode(selectedAgentId, nodeId);
+
+      setFlowStepItems(flow.nodes);
+      setSelectedFlowNodeId(null);
+      setActiveStep(
+        Math.max(
+          flow.nodes.findIndex((step) => step.id === nodeId),
+          0,
+        ),
+      );
+      setInspectorCollapsed(true);
+      setNodes(
+        buildInitialNodes(flow.nodes).map((node) => ({
+          ...node,
+          selected: false,
+        })),
+      );
+      setEdges(buildInitialEdges(flow.nodes));
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Unable to delete flow node.",
+      );
     }
   }
 
   return (
     <section className="relative min-h-0 flex-1 overflow-hidden bg-[rgba(5,5,5,0.82)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(149,232,215,0.08),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.025),transparent_32%)]" />
+      {isGeneratingAgent && selectedAgent ? (
+        <AgentGenerationProgress agent={selectedAgent} surface="canvas" />
+      ) : null}
       <ReactFlow
         nodes={nodes}
         edges={edges}

@@ -1,104 +1,77 @@
-import {
-  BrainCircuit,
-  Code2,
-  Diamond,
-  Search,
-  ShieldCheck,
-  Zap,
-} from "lucide-react";
-
+import { getFlowIcon } from "@/features/flow/lib/flow-icons";
 import type { FlowStep } from "@/features/flow/types/flow-step";
 
 export const flowSteps: FlowStep[] = [
   {
-    id: "persona",
-    step: "Core",
-    title: "Persona Kernel",
-    subtitle: "System role, constraints, and behavior",
-    icon: BrainCircuit,
-    connectedMcp: ["persona-router", "system-prompt", "policy-guard"],
-    sourceLinks: ["docs/ssot.md", "content/flow-nodes/persona.md"],
+    id: "orchestrate",
+    step: "Skill",
+    title: "Orchestrate Requests",
+    subtitle: "Routes every agent step from one local SKILL.md",
+    iconKey: "brain",
+    icon: getFlowIcon("brain"),
+    connectedMcp: ["local-cli", "claude-memory", "runtime-router"],
+    sourceLinks: [],
     instructionStatus: "ready",
-  },
-  {
-    id: "scrape",
-    step: "Step 1",
-    title: "Apify Scrape",
-    subtitle: "Collect page content and state",
-    icon: Search,
-    connectedMcp: ["apify", "browser", "snapshot-reader"],
-    sourceLinks: ["https://apify.com", "content/flow-nodes/scrape.md"],
-    instructionStatus: "ready",
-  },
-  {
-    id: "qualify",
-    step: "Step 2",
-    title: "Site Qualify",
-    subtitle: "Evaluate output and route actions",
-    icon: Diamond,
-    connectedMcp: ["rules-engine", "quality-check", "memory-read"],
-    sourceLinks: ["content/flow-nodes/qualify.md"],
-    instructionStatus: "review",
-  },
-  {
-    id: "compose",
-    step: "Step 3",
-    title: "Code Compose",
-    subtitle: "Generate implementation output",
-    icon: Code2,
-    connectedMcp: ["codex", "filesystem", "artifact-writer"],
-    sourceLinks: ["README.md", "content/flow-nodes/compose.md"],
-    instructionStatus: "ready",
-  },
-  {
-    id: "memory",
-    step: "Step 4",
-    title: "Memory Sync",
-    subtitle: "Persist session context locally",
-    icon: ShieldCheck,
-    connectedMcp: ["claude-mem", "sqlite", "session-store"],
-    sourceLinks: ["content/flow-nodes/memory.md"],
-    instructionStatus: "draft",
-  },
-  {
-    id: "deploy",
-    step: "Step 5",
-    title: "Deploy Preview",
-    subtitle: "Ship preview result",
-    icon: Zap,
-    connectedMcp: ["vercel", "preview-deploy", "status-webhook"],
-    sourceLinks: ["https://vercel.com/docs", "content/flow-nodes/deploy.md"],
-    instructionStatus: "review",
   },
 ];
 
 export function createFlowStep(index: number): FlowStep {
+  const agentStepNumber = Math.max(index, 1);
+
   return {
-    id: `step-${index}`,
-    step: `Step ${index}`,
-    title: `Custom Step ${index}`,
-    subtitle: "New workflow stage",
-    icon: Code2,
-    connectedMcp: ["dummy-mcp", "dummy-memory", "dummy-output"],
+    id: `agent-step-${agentStepNumber}`,
+    step: "Agent",
+    title: `Agent Step ${agentStepNumber}`,
+    subtitle: "Agent step coordinated by the orchestrator skill",
+    iconKey: "code",
+    icon: getFlowIcon("code"),
+    connectedMcp: ["local-cli", "claude-memory", "runtime-router"],
     sourceLinks: [],
     instructionStatus: "draft",
   };
 }
 
 export function createDummyMarkdownContent(step: FlowStep) {
-  return `# ${step.title}
+  if (step.step === "Skill") {
+    return `# ${step.title}
 
-Operational brief for ${step.title.toLowerCase()}.
+This is the root SKILL.md for the Harness Canvas. It coordinates the agent steps that follow it.
 
 ## Purpose
 
-- Describe the exact intent of ${step.step.toLowerCase()}
-- Clarify which MCP tools are mandatory
-- Keep the output easy for the next operator to execute
+- Read the user request and current canvas state
+- Choose the correct downstream agent step
+- Pass only the context that step needs
+- Keep local Claude and Codex execution aligned with Claude-Mem project memory
+
+## Orchestration Rules
+
+- Run agent steps in canvas order unless the user asks for a targeted step
+- Do not skip required approval gates
+- Preserve memory and handoff notes between steps
+- Keep outputs concise, actionable, and ready for the next agent
+
+## Success Criteria
+
+- Every agent step has a clear handoff
+- Local runtime behavior matches this canvas
+- The final response reflects the completed agent sequence
+`;
+  }
+
+  return `# ${step.title}
+
+Agent-step brief for ${step.title.toLowerCase()}.
+
+## Purpose
+
+- Execute this agent step after orchestration
+- Clarify which local CLI or MCP tools are mandatory
+- Return a clean handoff for the orchestrator
 
 ## Required Inputs
 
-- Upstream workflow context
+- User request and upstream orchestrator context
 - Tool configuration
 - Any constraints inherited from the previous node
 
@@ -106,12 +79,12 @@ Operational brief for ${step.title.toLowerCase()}.
 
 - Primary deliverable
 - Structured handoff data
-- Validation notes
+- Validation notes for the orchestrator
 
 ## Success Criteria
 
 - Output is technically complete
 - Tool usage is explicit
-- Downstream agent can continue without clarification
+- The orchestrator can route the next agent without clarification
 `;
 }

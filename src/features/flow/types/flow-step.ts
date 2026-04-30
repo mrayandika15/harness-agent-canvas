@@ -5,6 +5,7 @@ export type FlowStep = {
   step: string;
   title: string;
   subtitle: string;
+  iconKey?: string;
   icon: LucideIcon;
   connectedMcp: string[];
   sourceLinks: string[];

@@ -1,0 +1,6 @@
+.next/
+node_modules/
+data/
+graphify-out/
+content/harness/*/graphify-out/cache/
+bun.lock

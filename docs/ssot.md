@@ -69,7 +69,7 @@ AgentCanvas operates on a hybrid architecture. A premium, highly reactive Next.j
 
 ### 2.5 AI & Memory Infrastructure
 * **Execution Engine:** **Local CLI Subscriptions** run natively on the host machine to ensure fast execution and deep access to the local development environment.
-* **Context & Memory Manager:** **`claude-mem`** integrates into the local execution path, utilizing its underlying SQLite store for lightning-fast reads/writes before passing prompts to the final LLM command.
+* **Context & Memory Manager:** **`claude-mem`** integrates into the local execution path as the durable agent memory source before prompts are passed to the final LLM command.
 
 ### 2.6 Development & Deployment Strategy
 * **Runtime & Package Manager:** **Bun** ensures incredibly fast dependency installation and rapid execution of the local backend workers.

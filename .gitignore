@@ -1,5 +1,11 @@
 .next/
 node_modules/
 tsconfig.tsbuildinfo
-.codex/
+.codex/*
+!.codex/skills/
+.codex/skills/*
+!.codex/skills/harness-*/
+!.codex/skills/harness-*/SKILL.md
 .DS_Store
+graphify-out/
+content/harness/*/graphify-out/cache/
